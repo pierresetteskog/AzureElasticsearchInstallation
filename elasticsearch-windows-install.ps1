@@ -36,6 +36,8 @@
         Disk location of the base folder of elasticsearch installation.
     .PARAMETER discoveryEndpoints
         Formatted string of the allowed subnet addresses for unicast internode communication e.g. 10.0.0.4-3 is expanded to [10.0.0.4,10.0.0.5,10.0.0.6]
+    .PARAMETER $nodeEndpoint
+        the node ip
     .PARAMETER elasticClusterName
         Name of the elasticsearch cluster
     .PARAMETER masterOnlyNode
@@ -56,6 +58,7 @@ Param(
     [string]$jdkDownloadLocation,
 	[string]$elasticSearchBaseFolder,
     [string]$discoveryEndpoints,
+	[string]$nodeEndpoint,
 	[string]$elasticClusterName,
     [string]$storageKey,
     [string]$marvelEndpoints,
@@ -577,8 +580,11 @@ function Install-WorkFlow
     # In ES 2.x you explicitly need to set network host to _non_loopback_ or the IP address of the host else other nodes cannot communicate
     if ($elasticSearchVersion -match '2.')
     {
-        $textToAppend = $textToAppend + "`nnetwork.host: _non_loopback_"
+        $textToAppend = $textToAppend + "`nnetwork.host: $nodeEndpoint"
     }
+
+	cmd.exe /C "$elasticSearchBin\plugin.bat install mobz/elasticsearch-head"
+	cmd.exe /C "$elasticSearchBin\plugin.bat install appbaseio/dejavu"
 
 	# configure the cloud-azure plugin, if selected
 	if ($po.Length -ne 0 -and $r.Length -ne 0)
@@ -665,6 +671,7 @@ function Startup-Output
     if($jdkDownloadLocation.Length -ne 0) { lmsg "Jdk download location: $jdkDownloadLocation" }
     if($elasticSearchBaseFolder.Length -ne 0) { lmsg "Elasticsearch base folder: $elasticSearchBaseFolder" }
     if($discoveryEndpoints.Length -ne 0) { lmsg "Discovery endpoints: $discoveryEndpoints" }
+	if($nodeEndpoint.Length -ne 0) { lmsg "Node endpoint: $nodeEndpoint" }
     if($marvelEndpoints.Length -ne 0) { lmsg "Marvel endpoints: $marvelEndpoints" }
 	if($po.Length -ne 0 -and $r.Length -ne 0) { lmsg "Installing cloud-azure plugin" }
     if($masterOnlyNode) { lmsg 'Node installation mode: Master' }
