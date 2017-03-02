@@ -488,11 +488,30 @@ function Jmeter-Run($unzipLoc)
     lmsg 'Starting jmeter server agent at ' $targetPath
     Start-Process -FilePath $targetPath -WindowStyle Minimized | Out-Null
 }
+function InstallChoco()
+{
+	iwr https://chocolatey.org/install.ps1 -UseBasicParsing | iex
+	choco install googlechrome -y
+	choco install notepadplusplus -y
+}
+
+function AddScheduledTaskCleanLog()
+{
+	$action = New-ScheduledTaskAction -Execute 'Powershell.exe' -Argument '-NoLogo -NoProfile -NonInteractive -executionpolicy bypass  -command "& {Get-ChildItem -Path "C:\elasticSearch\elasticsearch-2.4.3\logs" -Recurse -Force | Where-Object { !$_.PSIsContainer -and $_.CreationTime -lt (Get-Date).AddDays(-15)} | Remove-Item -Force}" > c:\logclean.txt 2>&1'
+
+	$trigger =  New-ScheduledTaskTrigger -Daily -At 9am
+
+	Register-ScheduledTask -Action $action -Trigger $trigger -TaskName cleaneslog -Description "clean es log"
+}
 
 function Install-WorkFlow
 {
 	# Start script
     Startup-Output
+	
+	InstallChoco
+	
+	AddScheduledTaskCleanLog
 	
     # Discover raw data disks and format them
     $dc = Initialize-Disks
