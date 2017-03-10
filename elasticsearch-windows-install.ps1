@@ -332,6 +332,13 @@ function Implode-Host([string]$discoveryHost)
     return $addresses
 }
 
+function MinMasterNodes([string]$discoveryHost)
+{   
+    [decimal] $noOfNodes = $discoveryHost.Trim().Split('-')[1];
+    return [math]::floor($noOfNodes/2)+1;
+}
+
+
 function Implode-Host2([string]$discoveryHost)
 {
     # Discovery host must be in a given format e.g. 10.0.0.1-3 for the below code to work
@@ -588,7 +595,7 @@ function Install-WorkFlow
         $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: true"
     }
 
-	$textToAppend = $textToAppend + "`ndiscovery.zen.minimum_master_nodes: 2"
+	$textToAppend = $textToAppend + "`ndiscovery.zen.minimum_master_nodes: "+MinMasterNodes()
     $textToAppend = $textToAppend + "`ndiscovery.zen.ping.multicast.enabled: false"
 
     if($ipAddresses -ne $null)
