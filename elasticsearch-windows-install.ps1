@@ -332,14 +332,7 @@ function Implode-Host([string]$discoveryHost)
     return $addresses
 }
 
-function MinMasterNodes([string]$discoveryHost)
-{   
-    [decimal] $noOfNodes = $discoveryHost.Trim().Split('-')[1];
-    return [math]::floor($noOfNodes/2)+1;
-}
-
-
-function Implode-Host2([string]$discoveryHost)
+function Implode-Host2([string]$discoveryHost, [string]$nodeEndpoint)
 {
     # Discovery host must be in a given format e.g. 10.0.0.1-3 for the below code to work
     # 10.0.0.1-3 would be converted to "10.0.0.10 10.0.0.11 10.0.0.12"
@@ -349,14 +342,28 @@ function Implode-Host2([string]$discoveryHost)
     $prefixAddress = $dashSplitArr[0]
     $loop = $dashSplitArr[1]
 
+
+    
     $ipRange = @(0) * $loop
+    if($nodeEndpoint)
+    {
+        # If node endpoint is supplied, make array shorter.
+        $ipRange = @(0) * ($loop-1)    
+    }
+
     for($i=0; $i -lt $loop; $i++)
     {
         $format = "$prefixAddress$i"
-        $ipRange[$i] = '"' +$format + '"'
-    }
 
+        # Do not add node endpoint
+        if($format -ne $nodeEndpoint)
+        {
+            $ipRange[$i] = '"' +$format + '"'
+        }
+        
+    }
     $addresses = $ipRange -join ','
+    
     return $addresses
 }
 
@@ -553,7 +560,7 @@ function Install-WorkFlow
 	if($elasticClusterName.Length -eq 0) { $elasticClusterName = 'elasticsearch_cluster' }
         
     # Unicast host setup
-    if($discoveryEndpoints.Length -ne 0) { $ipAddresses = Implode-Host2 $discoveryEndpoints }
+    if($discoveryEndpoints.Length -ne 0) { $ipAddresses = Implode-Host2 $discoveryEndpoints $nodeEndpoint }
 		
 	# Extract install folders
 	$elasticSearchBinParent = (gci -path $elasticSearchInstallLocation -filter "bin" -Recurse).Parent.FullName
@@ -595,7 +602,7 @@ function Install-WorkFlow
         $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: true"
     }
 
-	$textToAppend = $textToAppend + "`ndiscovery.zen.minimum_master_nodes: "+MinMasterNodes()
+	$textToAppend = $textToAppend + "`ndiscovery.zen.minimum_master_nodes: 2"
     $textToAppend = $textToAppend + "`ndiscovery.zen.ping.multicast.enabled: false"
 
     if($ipAddresses -ne $null)
