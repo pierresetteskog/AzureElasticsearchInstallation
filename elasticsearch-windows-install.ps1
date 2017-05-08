@@ -607,8 +607,8 @@ function Install-WorkFlow
         lmsg 'Configure node as master and data'
         $textToAppend = $textToAppend + "`nnode.master: true`nnode.data: true"
     }
-
-	$textToAppend = $textToAppend + "`ndiscovery.zen.minimum_master_nodes: "+MinMasterNodes($discoveryEndpoints);
+[string] $m=MinMasterNodes($discoveryEndpoints)
+	$textToAppend = $textToAppend + "`ndiscovery.zen.minimum_master_nodes: $m" 
     $textToAppend = $textToAppend + "`ndiscovery.zen.ping.multicast.enabled: false"
 
     if($ipAddresses -ne $null)
